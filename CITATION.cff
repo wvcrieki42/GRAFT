@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: "If you use GRAFT, please cite both this software archive and the associated paper."
+title: "GRAFT — Graph of Relatedness, Applications, Families and Taxonomy"
+abstract: >-
+  A Neo4j knowledge graph linking the Open Tree of Life synthetic taxonomy
+  (4.5M taxa) to multilingual common names (NCBI, GBIF) and a Google Patents
+  BigQuery patent layer (759,182 patents, 22,876 species), with IPC/CPC class
+  definitions resolved. Includes the full ingest and analysis pipeline,
+  topological and time-calibrated (TimeTree of Life) Mantel tests of
+  phylogenetic signal in patent applications, and an interactive web interface.
+type: software
+authors:
+  - family-names: "Van Criekinge"
+    given-names: "Wim"
+    orcid: "https://orcid.org/0000-0003-2971-5539"
+    affiliation: "Laboratory for Computational Genomics and Bioinformatics (Biobix), Ghent University"
+version: "1.0.0"
+date-released: "2026-05-27"
+license: MIT
+repository-code: "https://github.ugent.be/wvcrieki/GRAFT"
+keywords:
+  - phylogenetics
+  - tree of life
+  - patents
+  - knowledge graph
+  - Neo4j
+  - Mantel test
+  - phylogenetic signal
+  - bioprospecting
+  - TimeTree
+preferred-citation:
+  type: article
+  title: "GRAFT: phylogenetic signal in patent applications across the tree of life"
+  authors:
+    - family-names: "Van Criekinge"
+      given-names: "Wim"
+      orcid: "https://orcid.org/0000-0003-2971-5539"
+  year: 2026
+  notes: "Manuscript in preparation / under review; preprint to follow on bioRxiv."
