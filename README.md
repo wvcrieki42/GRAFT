@@ -111,4 +111,4 @@ manuscript/                # paper.pdf, paper.html
 
 ## Contact
 
-Wim Van Criekinge — wim.vancriekinge@gmail.com
+Wim Van Criekinge — wim.vancriekinge@ugent.be
