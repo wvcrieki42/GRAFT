@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>treeoflife — patent browser</title>
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+<header>
+  <h1>tree<span class="dot">·</span>of<span class="dot">·</span>life patent browser</h1>
+  <p class="sub">Pick a taxon (any rank — order, family, genus, species) and optionally a CPC subclass.
+     The tree shows descendant species linked to at least one patent in that CPC.
+     Hover a leaf to see the actual patent titles; click to open them on Google Patents.</p>
+</header>
+
+<section class="controls">
+  <div class="control">
+    <label for="taxon-input">Taxon</label>
+    <div class="autocomplete">
+      <input id="taxon-input" type="text" placeholder="e.g. Angelica, Salmonidae, Plantae…" autocomplete="off">
+      <ul id="taxon-suggestions" class="suggestions"></ul>
+    </div>
+    <div id="taxon-current" class="badge"></div>
+  </div>
+
+  <div class="control">
+    <label for="cpc-select">CPC subclass <span class="hint">(application type)</span></label>
+    <select id="cpc-select">
+      <option value="">— (no CPC filter — show all patents) —</option>
+    </select>
+  </div>
+
+  <div class="control">
+    <label for="limit-select">Max leaves</label>
+    <select id="limit-select">
+      <option value="100">100</option>
+      <option value="300" selected>300</option>
+      <option value="600">600</option>
+      <option value="1000">1000</option>
+    </select>
+  </div>
+
+  <button id="run-btn" disabled>Build tree</button>
+  <div id="status" class="status"></div>
+</section>
+
+<div id="breadcrumb" class="breadcrumb"></div>
+<main>
+  <div id="viz-wrap">
+    <svg id="viz"></svg>
+  </div>
+  <div id="tooltip" class="tooltip" style="display:none"></div>
+</main>
+
+<footer>
+  <span>Graph: 4.53M taxa · 759k patents · 35k CPC classes</span>
+  <span>Code: <a href="https://github.ugent.be/wvcrieki/treeoflife" target="_blank" rel="noopener">github.ugent.be/wvcrieki/treeoflife</a></span>
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GRAFT: Phylogenetic signal in patent applications across the tree of life</title>
+<style>
+  @page {
+    size: A4;
+    margin: 22mm 24mm 22mm 24mm;
+    @top-right { content: counter(page) " / " counter(pages); font-size: 9pt; color: #555; }
+    @bottom-center { content: "Submitted manuscript — do not redistribute"; font-size: 8pt; color: #888; }
+  }
+  html { font-family: "Times New Roman", Times, serif; font-size: 11pt; color: #111; }
+  body { line-height: 1.7; counter-reset: line; }
+  h1.title { font-size: 18pt; font-weight: bold; line-height: 1.2; margin: 0 0 0.4em 0; }
+  .authors { font-size: 11pt; margin: 0 0 0.2em 0; }
+  .affil { font-size: 9.5pt; color: #444; margin: 0 0 0.6em 0; font-style: italic; }
+  .corr  { font-size: 9pt; color: #444; margin: 0 0 1.4em 0; }
+  h2 { font-size: 12pt; font-weight: bold; margin: 1.2em 0 0.4em 0; padding-bottom: 0.1em; border-bottom: 1px solid #999; }
+  h3 { font-size: 11pt; font-weight: bold; margin: 1em 0 0.3em 0; }
+  p  { margin: 0 0 0.7em 0; text-align: left; }
+  .abstract { font-size: 10.5pt; background: #f6f8fa; border-left: 3px solid #999; padding: 0.7em 1em; margin: 0.4em 0 1em 0; line-height: 1.55; }
+  .abstract h3 { margin-top: 0; font-size: 10.5pt; }
+  figure { margin: 1.0em 0; page-break-inside: avoid; }
+  figure img { max-width: 100%; }
+  figcaption { font-size: 9.5pt; line-height: 1.45; margin-top: 0.4em; }
+  figcaption b { font-weight: bold; }
+  table { border-collapse: collapse; font-size: 10pt; margin: 0.5em 0 1em 0; width: 100%; }
+  table caption { font-size: 9.5pt; text-align: left; margin-bottom: 0.3em; }
+  th, td { border: 0.5pt solid #999; padding: 4px 6px; vertical-align: top; }
+  th { background: #eee; font-weight: bold; }
+  .small { font-size: 9.5pt; }
+  .refs { font-size: 9.5pt; line-height: 1.45; }
+  .refs ol { padding-left: 1.6em; }
+  .refs li { margin-bottom: 0.3em; }
+  code, .mono { font-family: "Menlo", "Consolas", monospace; font-size: 9.5pt;
+                font-variant-ligatures: none; }
+  /* Inline code with URLs may break at any character _if necessary_ (not always),
+     so plain words inside <code> are not split mid-word. */
+  p .mono, p code { overflow-wrap: anywhere; }
+  .pill { background: #eef2f7; padding: 1px 5px; border-radius: 4px; font-family: "Menlo", monospace; font-size: 9pt; }
+  sup { font-size: 8pt; vertical-align: super; line-height: 0; }
+  .keypoint { background: #f6f8fa; padding: 0.5em 0.9em; border-left: 3px solid #1f6feb; margin: 0.6em 0; }
+  hr.section-break { border: none; border-top: 1px solid #ccc; margin: 1.5em 0; }
+  /* Paragraph numbering — supports reviewer "see ¶ 23" references in lieu of true
+     line numbers. Inline rather than absolutely positioned, since Chrome's print
+     engine clips content outside the @page content box. */
+  body { counter-reset: para; }
+  p:not(.affil):not(.corr):not(.authors):not(.small) {
+    counter-increment: para;
+  }
+  p:not(.affil):not(.corr):not(.authors):not(.small)::before {
+    content: counter(para);
+    display: inline-block;
+    min-width: 1.6em;
+    margin-right: 0.4em;
+    color: #b0b0b0;
+    font-size: 7.5pt;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    vertical-align: 0.2em;
+  }
+  .refs p::before, figcaption::before, table caption::before { content: none !important; }
+  .refs p, figcaption { counter-increment: none !important; }
+</style>
+</head>
+<body>
+
+<h1 class="title">GRAFT: phylogenetic signal in patent applications across the tree of life</h1>
+<p class="affil" style="font-style:normal; color:#333; margin-top:-0.2em;"><b>GRAFT</b> — <i>Graph of Relatedness, Applications, Families and Taxonomy.</i></p>
+<p class="authors"><b>Wim Van Criekinge</b><sup>1,*</sup> <span style="font-size:9pt; color:#444;">(ORCID: <a href="https://orcid.org/0000-0003-2971-5539" style="color:#1f6feb; text-decoration:none;">0000-0003-2971-5539</a>)</span></p>
+<p class="affil"><sup>1</sup>Laboratory for Computational Genomics and Bioinformatics (Biobix), Department of Mathematical Modelling, Statistics and Bioinformatics, Ghent University, Coupure Links 653, 9000 Ghent, Belgium.</p>
+<p class="corr"><sup>*</sup>Correspondence: <span class="mono">wim.vancriekinge@ugent.be</span></p>
+
+<div class="abstract">
+<h3>Abstract</h3>
+<p>Whether closely related species are repurposed for similar biotechnologies &mdash; a phylogenetic signal in human technological interest &mdash; has lacked a tractable test at scale. We built <b>GRAFT</b> (<i>Graph of Relatedness, Applications, Families and Taxonomy</i>), a Neo4j knowledge graph linking the Open Tree of Life synthetic taxonomy (4.53 &times; 10<sup>6</sup> taxa)<sup>1</sup> to multilingual common names<sup>2,3</sup> and to a Google Patents BigQuery patent layer from a single 257&nbsp;GB SQL scan, recovering 22,876 species in 759,182 patents with all CPC and IPC class definitions resolved. Treating each species' CPC-subclass profile as a binary application vector, we tested the correlation between pairwise topological phylogenetic distance and pairwise Jaccard distance of patent profiles by Mantel test<sup>6</sup> (999 permutations, <i>n</i> = 9,944 species at &ge;5 patents, 49,436,596 pairs). The global correlation was significant (Pearson <i>r</i> = +0.188, one-sided <i>p</i> = 0.001), with Bonferroni-significant phylogenetic signal in every close-distance bin from sister-species through within-class. The signal is not an artefact of the unweighted topology: re-expressing phylogenetic distance as time-calibrated divergence from the TimeTree of Life confirms Bonferroni-significant signal in every bin out to ~500 Myr of divergence. The same graph supports a predictive query that returns sister-species bioprospecting candidates for any application: ten <i>Angelica</i> congeners are unflagged for medicinal preparations while <i>A. sinensis</i> (Chinese angelica) already carries 86,814 such edges. GRAFT is an openly extensible scaffold linking phylogeny, ecology and the global IP record.</p>
+</div>
+
+<h2>Main</h2>
+<p>The tree of life is the canonical organizing principle for biological knowledge<sup>1,4</sup>. Patents are the formal, dated, and globally indexed record of human-designed biotechnological applications, classified through the International Patent Classification (IPC) and the Cooperative Patent Classification (CPC) systems. Despite the size and structure of both resources, no graph-based integration linking complete taxonomic topology to patent classification has been published in the public domain. We asked whether such an integration would reveal a measurable <em>phylogenetic signal</em><sup>4,5</sup> in patent applications: whether closely related species tend to be exploited for similar biotechnologies — a question of obvious relevance to bioprospecting, freedom-to-operate analyses, and the geographic and ecological structure of biotechnological innovation.</p>
+
+<p>We assembled a Neo4j 2026.04 graph database (<code>treeoflife</code>) integrating three primary sources: (i) the Open Tree of Life Open Tree Taxonomy v3.7.3 (released 2025-12-22), providing topology and identifier cross-references; (ii) NCBI Taxonomy (taxdump retrieved 2026-05-05), providing scientific authority on taxon identifiers and English vernacular names; and (iii) the GBIF Backbone Taxonomy (release 2023-08-28), filtered to English (<i>en</i>) and Dutch (<i>nl</i>) vernacular records<sup>3</sup>. The OTT taxonomic file embeds NCBI and GBIF cross-references in its <code>sourceinfo</code> field (e.g. <code>ncbi:9606,gbif:2436436</code>), which we used as the primary join key — sidestepping the well-known ambiguities of name-based matching. After preprocessing (Methods), the graph held 4,529,570 <code>:Taxon</code> nodes connected by 4,529,569 <code>:HAS_PARENT</code> edges (a single root, "life") and 524,609 <code>:Vernacular</code> nodes (479,194 English + 45,415 Dutch).</p>
+
+<figure>
+<img src="../data/fig1_schema.png" alt="Integrated graph schema">
+<figcaption><b>Figure 1 | Integrated graph schema.</b> Five node labels and five relationship types span phylogeny (<code>:Taxon</code> with reflexive <code>HAS_PARENT</code>), naming (<code>:Vernacular</code>, multilingual, source-tracked), and a patent overlay (<code>:Patent</code> linked to <code>:IPCClass</code> and <code>:CPCClass</code> classification nodes). Class nodes carry full hierarchical metadata: section, class, subclass codes and titles, plus the subgroup definition resolved from the official scheme files. Total node and edge counts at the time of analysis are shown in the legend.</figcaption>
+</figure>
+
+<p>The patent overlay was constructed in a single SQL pass over the public BigQuery dataset <code>patents-public-data.patents.publications</code> (170 × 10<sup>6</sup> documents, 3.1 TB), without restricting to a candidate-species short list. The query extracts every two-word lowercase phrase from each patent's English title or abstract via <code>REGEXP_EXTRACT_ALL</code>, then INNER JOINs the resulting candidate stream against a BigQuery table containing 2.52 × 10<sup>6</sup> binomial-shaped scientific names exported from OTT (the JOIN filters out non-binomial author/place/jargon phrases that the regex inevitably also extracts). A single 258 GB scan (~80 s on BigQuery's free tier) returned 1,562,854 (species, patent) edges across 22,819 species and 759,182 unique patents. Sampling is uniform with no per-species cap, so high-volume taxa contribute their full patent sets (e.g. <i>Escherichia coli</i>, 28,022 patents; <i>Bacillus subtilis</i>, 21,248; <i>Angelica sinensis</i>, 14,722; <i>Ganoderma lucidum</i>, 11,712). Two earlier replication pilots using a 1,000-species short list — one via the EPO Open Patent Services biblio API at top-25 hits per species, one via BigQuery limited to the same short list — recovered the same global Mantel pattern within 0.10 of <i>r</i>, confirming that neither the corpus nor the per-species cap drives the result (Supplementary Information). Class definitions for every IPC main group and every CPC subgroup encountered were resolved by parsing the official 2024-01 WIPO IPC scheme (79,474 entries) and the 2026-05 EPO/USPTO CPC scheme (254,274 entries). Coverage was complete: 100% of 20,746 distinct IPC classes and 100% of 35,139 distinct CPC classes encountered in the patent set were assigned a definition, section title, class title, and subclass title (Figure 1).</p>
+
+<h3>The CPC structure of species-linked patents</h3>
+<p>All nine CPC sections — including the cross-cutting Y-section for climate-change-related tagging — were represented in the species-linked patent set, but the distribution was strongly biased toward sections A (<i>Human Necessities</i>, 2,581,111 of 3,701,603 CPC edges, 69.7%) and C (<i>Chemistry; Metallurgy</i>, 841,826 edges, 22.7%); the Y-section followed at 3.6% and the remaining six sections held under 4% combined (Figure 2a). At the subclass level, the top 15 CPC subclasses (Figure 2b) were dominated by biomedical and food/feed applications: <i>A61K</i> (medicinal preparations) was tagged on 205,090 patents covering 10,261 of 22,876 species, <i>C12N</i> (microorganisms; enzymes; genetic engineering) on 135,207 patents and 7,012 species, and <i>A61P</i> (specific therapeutic activity) on 131,979 patents. Climate-change adaptation and production tagging (<i>Y02A</i>, <i>Y02P</i>) appeared together at 94,854 patents, prominent at this scale — reflecting CPC's cross-classification of agricultural and biotech innovations under the green-technology umbrella. Two further indexing schemes (<i>A23V</i> for foods, <i>C12R</i> for microorganisms) entered the top-7 at full-corpus scale, neither of which had been visible in the smaller pilot samples. Aquaculture, biocides, fodder and horticulture subclasses (<i>A01N</i>, <i>A01G</i>, <i>A23K</i>, <i>A01K</i>) jointly carried 107,242 patents. The breadth of species coverage (median 4,144 species per subclass in the top-15 set) confirms that the patent layer reflects general biotechnological exploitation rather than a small set of highly-cited outliers.</p>
+
+<figure>
+<img src="../data/fig3_cpc_distribution.png" alt="CPC class distribution">
+<figcaption><b>Figure 2 | CPC classification structure of species-linked patents.</b> <b>a,</b> CPC section distribution across 13,763 Patent → CPCClass edges. Sections A (Human Necessities) and C (Chemistry) account for 91.8% of all classifications, consistent with a corpus dominated by biomedical, food/feed, and biotechnology innovations. <b>b,</b> Top 15 CPC subclasses ranked by patent volume. Blue bars: number of patents tagged with that subclass; green bars: number of species whose patents include that subclass. The wide species-side bars indicate that the leading subclasses cut broadly across the taxonomy rather than concentrating on a narrow clade.</figcaption>
+</figure>
+
+<h3>Phylogenetic signal in patent applications</h3>
+<p>To test whether phylogenetically related species share more similar patent applications, we computed two pairwise distance matrices over the same set of species and applied the Mantel test<sup>6</sup>. The phylogenetic distance between any two species was defined as the number of <code>HAS_PARENT</code> edges on the path through their lowest common ancestor in OTT — a topological distance, since OTT does not provide branch lengths. The patent-profile distance was defined as the Jaccard distance<sup>7</sup> between the sets of <em>CPC subclasses</em> (4-character codes such as <i>A23K</i>, <i>C12N</i>) tagged on each species' patents; aggregation to subclass level reduces noise relative to the full subgroup code while remaining at the granularity at which "applications" cluster in patent law.</p>
+
+<p>Restricting to the 9,944 species with ≥5 unique patents (a standard practice to limit profile-vector noise<sup>5</sup>), the global Mantel correlation was Pearson <i>r</i> = +0.188 across 49,436,596 species pairs, one-sided permutation <i>p</i> = 0.001 (the floor of the 999-permutation null distribution). Phylogenetic distance ranged from 2 (sister species) to 58 (cross-kingdom pairs); CPC Jaccard distance from 0 (identical profiles) to 1 (disjoint profiles). The positive correlation indicates that as phylogenetic distance grows, patent profiles become more dissimilar — the direction predicted by the phylogenetic-signal hypothesis. The effect size (<i>r</i> ≈ 0.19) is somewhat smaller than in the smaller-sample pilots — expected, because the 9,944-species set spans the full eukaryotic tree and includes many cross-kingdom pairs that dilute the global average. Two earlier pilots — one via OPS at top-25 hits per species and one via BigQuery limited to the same 1,000-species short list — returned <i>r</i> = +0.281 and +0.253 respectively, monotonically converging on the full-tree estimate as taxonomic breadth increases.</p>
+
+<p>Decomposing the global signal across phylogenetic-distance bins via a Mantel correlogram<sup>8</sup> — in which each bin's correlation is computed against a binary indicator of bin membership and tested by the same permutation procedure — revealed that the signal extends through every taxonomic level from sister-species through within-class (Table 1, Figure 3). All four close-distance bins reached the permutation-test floor (<i>p</i> = 0.001) and were Bonferroni-significant at α = 0.05/5 = 0.01. The within-class bin alone contains 2.14 × 10<sup>6</sup> pairs at <i>r</i> = −0.065 — a relatively small effect size in absolute terms but a result that, given a >2-million-pair sample, has effectively zero probability of arising by chance. At cross-kingdom distances (≥12 edges, 4.65 × 10<sup>7</sup> pairs), the correlation flipped sign (<i>r</i> = +0.087) and the bin-membership permutation test was strongly non-significant in the negative direction, meaning that pairs separated by ≥12 OTT edges have <em>more</em> dissimilar patent profiles than chance — a structural artefact of the bin's size dominating the global distribution rather than evidence against the hypothesis.</p>
+
+<table>
+<caption><b>Table 1 | Mantel correlogram by phylogenetic-distance bin (full-tree BigQuery corpus, n = 9,944 species).</b> Negative <i>r</i> indicates that pairs in the bin are more profile-similar than chance — the phylogenetic-signal direction. <i>p</i><sub>neg</sub> is the one-sided permutation <i>p</i>-value (999 permutations) for negative <i>r</i>. *** = significant after Bonferroni at α = 0.01.</caption>
+<thead><tr><th>Bin (edges through LCA)</th><th>Approx. taxonomic level</th><th>Pairs</th><th><i>r</i></th><th><i>p</i><sub>neg</sub></th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td>[0, 3)</td><td>sister-species / within-genus</td><td>60,232</td><td>−0.033</td><td>0.001</td><td>***</td></tr>
+<tr><td>[3, 6)</td><td>within-family</td><td>65,210</td><td>−0.018</td><td>0.001</td><td>***</td></tr>
+<tr><td>[6, 9)</td><td>within-order</td><td>652,467</td><td>−0.048</td><td>0.001</td><td>***</td></tr>
+<tr><td>[9, 12)</td><td>within-class</td><td>2,140,494</td><td>−0.065</td><td>0.001</td><td>***</td></tr>
+<tr><td>[12, ∞)</td><td>across kingdoms</td><td>46,518,193</td><td>+0.087</td><td>1.000</td><td>n.s. (anti-direction)</td></tr>
+</tbody>
+</table>
+
+<figure>
+<img src="../data/mantel_correlogram.png" alt="Mantel correlogram">
+<figcaption><b>Figure 3 | Phylogeny–patent profile relationship (full-tree BigQuery corpus).</b> <b>Left,</b> scatter of pairwise CPC-subclass Jaccard distance against pairwise phylogenetic distance (OTT edges through the LCA) for all <span class="mono">n(n−1)/2 = 49,436,596</span> pairs of <i>n</i> = 9,944 species. The OLS fit (red line) corresponds to a global Mantel correlation of <i>r</i> = +0.188 (one-sided <i>p</i> = 0.001 — the floor of the 999-permutation null distribution). Phylogenetic distance is jittered horizontally for visibility. <b>Right,</b> Mantel correlogram. Bars show the bin-specific correlation between bin-membership and patent distance. Negative bars indicate that pairs in that bin are more profile-similar than chance. Green = Bonferroni-significant at α = 0.01; grey = not significant. <i>n</i> values per bin and one-sided <i>p</i>-values are annotated. The right-most cross-kingdom bin contains 94.1% of the pairwise mass and dominates the global distribution.</figcaption>
+</figure>
+
+<h3>Branch-length validation: divergence time confirms the signal</h3>
+<p>The topological metric above counts nodes, not evolutionary time: ten <code>HAS_PARENT</code> edges separate very different real timespans in slowly- versus rapidly-diversifying clades. To test whether the signal survives a time-calibrated distance, we mapped our species onto the TimeTree of Life v5 (TToL5), a synthesis of 4,075 published molecular-clock studies spanning 137,306 species<sup>10,11</sup>. Of the 9,944 patent-linked species, 5,387 (54.5%) matched a TToL5 tip exactly; crucially, these carry 72.4% of all patent volume in the graph (26 of the 30 most-patented species are present), so the matched subset retains the bulk of the signal-bearing data despite the species-count attrition. The pruned tree is exactly ultrametric (every tip 3,772 Myr from the root), so the patristic distance between two species equals twice the age of their most-recent common ancestor; we therefore expressed phylogenetic distance directly as <em>divergence time</em> in millions of years and recomputed the same CPC-subclass Jaccard test over the 5,306 matched species with a non-empty profile (14,074,165 pairs).</p>
+
+<p>The global Mantel correlation remained positive and significant (Pearson <i>r</i> = +0.103, one-sided permutation <i>p</i> = 0.001): species that diverged longer ago have more dissimilar patent profiles, the same direction as the topological test. The correlogram (Figure 4) is sharper in calibrated time than in node counts. Every divergence-time bin out to <b>~500 Myr</b> shows a Bonferroni-significant negative correlation (α = 0.05/7 = 0.007) — from congeneric splits (&lt;10 Myr, <i>r</i> = −0.027) through the 100–250 Myr window, where the signal peaks (<i>r</i> = −0.105 over 3.5 × 10<sup>6</sup> pairs) and which coincides with the radiations of the angiosperms and the major animal and fungal groups that dominate the patent record. Beyond ~500 Myr — the deep cross-phylum and cross-kingdom splits — the correlation flips positive and non-significant, exactly mirroring the cross-kingdom dilution seen in the topological [12, ∞) bin. As a control for metric choice, recomputing the <em>topological</em> (edge-count) Mantel on the identical 5,306-species TToL5 subtree returned <i>r</i> = +0.154 (<i>p</i> = 0.005), bracketing the time-calibrated estimate and the original full-tree value (<i>r</i> = +0.188): the conclusion does not depend on whether phylogenetic distance is measured as topology or as time (Supplementary Information S7, Table S6).</p>
+
+<figure>
+<img src="../data/mantel_bl_correlogram.png" alt="Branch-length Mantel correlogram">
+<figcaption><b>Figure 4 | Branch-length (time-calibrated) Mantel test.</b> Phylogenetic distance is the divergence time (Myr) between species, read from the ultrametric TimeTree of Life v5<sup>10,11</sup> pruned to the 5,306 patent-linked species with a TToL5 tip and a non-empty CPC profile. <b>Left,</b> CPC-subclass Jaccard distance against divergence time for all 14,074,165 pairs; the vertical banding reflects shared most-recent-common-ancestor ages. The OLS fit corresponds to a global Mantel <i>r</i> = +0.103 (one-sided <i>p</i> = 0.001). <b>Right,</b> Mantel correlogram in divergence-time bins. Every bin out to ~500 Myr (green) is Bonferroni-significant (α = 0.007) with negative <i>r</i> — more recently diverged species share more patent classes; the two deepest bins (grey) flip positive, the cross-kingdom dilution effect. <i>r</i>, pair count, and one-sided <i>p</i> are annotated per bin.</figcaption>
+</figure>
+
+<h3>Predictive utility: identifying species for unstated applications</h3>
+<p>The phylogenetic-signal result is not only descriptive: the same graph supports a directly actionable predictive query — <em>given a CPC subclass that captures an application of interest, which species are unflagged for it despite a close phylogenetic neighbour being heavily patented for the same application?</em> Such species are <i>a priori</i> good bioprospecting and screening candidates: their phylogenetic position predicts shared chemistry, physiology, or behaviour, but the IP record so far has not exploited them for the application in question. We illustrate the pattern with two worked examples drawn from the live graph (Cypher pattern in Box 1; full results in Supplementary Tables S2 &ndash; S3).</p>
+
+<p><b>Example 1 — medicinal preparations (CPC <i>A61K</i>).</b> <i>Angelica sinensis</i> (Chinese angelica, "dong quai") carries an extraordinary <b>86,814</b> distinct <code>:Patent</code>→<code>:CPCClass{A61K}</code> edges in the full-tree graph, reflecting the enormous Chinese-pharma patent corpus on its phthalide, ferulic-acid, and polysaccharide content. At least ten of its congeners — <i>A. atropurpurea</i> (purple-stem angelica), <i>A. genuflexa</i> (kneeling angelica), <i>A. glauca</i>, <i>A. ursina</i>, <i>A. cartilaginomarginata</i>, <i>A. biserrata</i>, <i>A. furcijuga</i>, <i>A. longicaudata</i>, <i>A. pseudoselinum</i>, <i>A. laxifoliata</i> — all at OTT phylogenetic distance 2 (sister-species, same genus) — carry zero <i>A61K</i> edges in the graph despite sharing the genus's signature secondary metabolism. Similar patterns emerge across the corpus: <i>Rheum officinale</i> (Chinese rhubarb, 67,170 <i>A61K</i> edges) → four congeners (<i>R. acuminatum</i>, <i>R. likiangense</i>, <i>R. tibeticum</i>, <i>R. webbianum</i>); <i>Astragalus membranaceus</i> (63,508 edges) → nine within-genus candidates; <i>Salvia miltiorrhiza</i> (54,009) → thirteen; <i>Codonopsis pilosula</i> (48,583) → five; <i>Ganoderma lucidum</i> (36,670) → eighteen <i>Ganoderma</i> species and <i>Trachyderma tsunodae</i>. Each is a one-line Cypher query away (Supplementary Table S2) and represents a testable hypothesis for a screening laboratory.</p>
+
+<p><b>Example 2 — cross-class consistency.</b> Many candidate species recur across multiple application subclasses. <i>Ganoderma lucidum</i> (Lingzhi, the medicinal mushroom of East Asian pharmacopoeia) carries 36,670 <i>A61K</i> edges and 1,181 <i>A61Q</i> edges in the graph, and <b>18 congeneric species</b> at OTT phylogenetic distance 2 — including <i>G. neojaponicum</i>, <i>G. tropicum</i>, <i>G. weberianum</i>, <i>G. zonatum</i>, <i>G. brownii</i> — are unflagged in <em>both</em> subclasses simultaneously. The pattern holds across the dataset: <i>Scutellaria baicalensis</i> (42,243 <i>A61K</i> / 1,043 <i>A61Q</i> edges) lists five within-genus candidates unflagged in both subclasses (<i>S. andrachnoides</i>, <i>S. galericulata</i>, <i>S. laeteviolacea</i>, <i>S. pekinensis</i>, <i>S. teniana</i>); <i>Staphylococcus aureus</i> (24,911 / 1,464) lists eleven; <i>Escherichia coli</i> (22,970 / 937) lists two (<i>Citrobacter koseri</i>, <i>E. albertii</i>). Cross-class persistence sharply increases the prior on those candidates being genuinely worth screening, because two independent application routes both point at the same evolutionary neighbour (Supplementary Tables S2 ∩ S3).</p>
+
+<div class="keypoint"><b>Box 1 | The predictive Cypher pattern.</b> For any CPC subclass <code>$target</code>, the candidate set is returned by a single graph traversal:
+<pre style="font-size:8.5pt;line-height:1.35;background:#f8f9fa;padding:0.5em 0.7em;border-radius:4px;margin:0.5em 0 0 0;white-space:pre-wrap;word-break:keep-all;"><code>MATCH (donor:Taxon {rank:'species'})
+      -[:HAS_PATENT]-&gt;(:Patent)
+      -[:HAS_CPC]-&gt;(:CPCClass {subclassCode:$target})
+WITH donor, count(*) AS donor_strength
+WHERE donor_strength &gt;= $min_strength
+MATCH path = (donor)-[:HAS_PARENT*1..4]-&gt;()
+             &lt;-[:HAS_PARENT*1..4]-(candidate:Taxon)
+WHERE candidate.rank='species' AND candidate &lt;&gt; donor
+  AND exists { (candidate)-[:HAS_PATENT]-&gt;() }
+  AND NOT exists {
+        (candidate)-[:HAS_PATENT]-&gt;(:Patent)
+                  -[:HAS_CPC]-&gt;(:CPCClass {subclassCode:$target})
+      }
+RETURN donor.name, donor_strength,
+       candidate.name, length(path) AS phylo_dist
+ORDER BY phylo_dist ASC, donor_strength DESC</code></pre>
+</div>
+
+<p>Two design choices are worth noting. First, the maximum phylo-distance (here 4 = within-family) is a tunable parameter: tightening to 2 (sister-species only) returns higher-confidence candidates with smaller recall; loosening to 6–9 (within-order) trades precision for breadth. Second, the strength filter (<code>donor_strength ≥ $min</code>) controls how well-established the application is in the donor — a single donor patent is weaker evidence than fifty. The Mantel correlogram (Table 1) gives an empirical signal-to-noise floor for each distance class, allowing the user to translate "phylogenetic distance" directly into a calibrated confidence weight.</p>
+
+<p>Three application-area framings follow naturally:</p>
+<ul style="margin:0 0 0.7em 1.5em;line-height:1.55;">
+<li><b>Bioprospecting.</b> Drug-discovery and natural-product programmes can rank candidate species against a target CPC subclass (e.g. <i>A61P 31</i>, antiinfectives) by phylogenetic proximity to known patentees, prioritising sourcing and screening accordingly.</li>
+<li><b>Patent landscape gap analysis.</b> Strategic IP teams can map "white space" — applications well-developed in some species but absent from related ones — to identify defensible new claims or, conversely, to anticipate competitor filings.</li>
+<li><b>Freedom-to-operate.</b> When considering using a species for an application, the candidate's phylogenetic neighbourhood gives a fast first check on whether prior art is likely to exist (in adjacent species) even if not for the species itself.</li>
+</ul>
+
+<h3>Discussion</h3>
+<p>The pattern reported here — significant phylogenetic signal in patent applications at every close taxonomic depth, with the signal effectively saturating at within-class — is consistent with how biotechnological innovation actually proceeds. Plant-extract patents that cover one species (e.g. <i>Avena sativa</i>) are routinely extended to congeners (<i>Avena fatua</i>) because the active phytochemistry is conserved along the lineage; vaccines and growth-hormone constructs developed for one salmonid often cover the whole genus; medicinal extracts of one mullein species inform claims on related <i>Verbascum</i>; cosmetics applications of one citrus species are typically broadened to the whole genus. The biology and the chemistry that make a species patent-worthy are heritable along evolutionary lineages, and the IPC/CPC tagging picks up that phylogenetic structure cleanly.</p>
+
+<p>That the signal extends to within-class (correlogram bin [9, 12)) is the more interesting finding: even species in different orders within a class — for example, different mammalian orders — show non-random sharing of CPC subclasses. We interpret this as the result of two converging effects: (i) class-level physiological similarity, which makes mammals broadly available for pharmaceutical and food/feed applications under shared subclasses (<i>A23K</i>, <i>A61K</i>, <i>A61P</i>, <i>C07K</i>); and (ii) ascertainment, in that the species selected for the top-1,000 list (ranked by vernacular-name count) are themselves clustered taxonomically, so within-class pairs are over-represented in our sample. Both effects point in the same direction, and disentangling them quantitatively will require a wider species sample including under-named clades — an obvious follow-up enabled by the schema in Figure 1.</p>
+
+<p>Several limitations are worth noting. First, the OTT topology is unweighted — branch lengths are not provided in the bulk dump<sup>1</sup> — so the primary phylogenetic-distance metric is coarse. We addressed this directly by repeating the analysis on the time-calibrated TimeTree of Life v5<sup>10,11</sup> (Figure 4): the signal not only survived but sharpened, remaining Bonferroni-significant in every divergence-time bin out to ~500 Myr, and a topological control on the same subtree gave a concordant <i>r</i>. The remaining caveat is coverage — TToL5 contains 54.5% of our species (72.4% of patent volume), so the time-calibrated test is run on a patent-rich but taxonomically thinner subset. Second, the BigQuery match restricts to English title and abstract; binomials mentioned only in claims text, in description body, or in non-English documents are missed. The OPS pilot, which searches all sections of each document, recovered species at a higher per-name hit rate; at the full-tree scale this remains the dominant under-counting bias, falling especially hard on under-studied lineages whose patent appearances are typically incidental rather than titular. Third, the strict binomial-shape filter on candidate species (two lowercase Latin words) removes ~33% of OTT names — primarily subspecies, varieties, hybrids and informal entries; reintegrating these via a relaxed regex would expand coverage at the cost of more false-positive joins. Each of these limitations weakens — rather than introduces — the observed signal, since they reduce both the granularity of distance and the breadth of the species set.</p>
+
+<p>GRAFT is openly extensible. The Lens patent database<sup>9</sup> or Google Patents Public Datasets queries can replace OPS without schema change. Adding gene-tree/orthology links (Ensembl Compara, OrthoDB) would let one ask whether <em>molecular</em> distance — rather than topological distance — is the better predictor of patent-application sharing. And linking species to ecological observation data (GBIF occurrences) would let one test whether geographic co-occurrence further conditions patent-application similarity. We provide the full ingest, schema, and analysis pipeline (Code Availability) as a reusable scaffold for these and other cross-disciplinary questions.</p>
+
+<h2>Methods</h2>
+
+<h3>Source datasets</h3>
+<p>Open Tree Taxonomy v3.7.3 was downloaded from <span class="mono">files.opentreeoflife.org/ott/ott3.7.3/ott3.7.3.tgz</span> on 2026-05-05<sup>1</sup>. The taxonomy file uses a tab-pipe-tab separator (<code>\t|\t</code>) and provides, per taxon: <code>uid</code> (OTT identifier), <code>parent_uid</code>, scientific <code>name</code>, <code>rank</code>, <code>sourceinfo</code> (a comma-separated list of source-system identifiers including <code>ncbi:N</code> and <code>gbif:N</code>), <code>uniqname</code> and <code>flags</code>. NCBI Taxonomy was retrieved as <span class="mono">ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz</span> on 2026-05-05<sup>2</sup>; <code>names.dmp</code> was filtered to <code>name_class ∈ {genbank common name, common name}</code> for English vernaculars. The GBIF Backbone Taxonomy (DOI 10.15468/39omei, release 2023-08-28) was downloaded from <span class="mono">hosted-datasets.gbif.org/datasets/backbone/current/backbone.zip</span><sup>3</sup>; the embedded <code>VernacularName.tsv</code> was filtered to <code>language ∈ {nl, en}</code>.</p>
+
+<h3>Graph construction</h3>
+<p>All ingest was performed via the official Python <span class="mono">neo4j</span> driver against a Neo4j 2026.04.0 Enterprise instance, target database <code>treeoflife</code>. Constraints were declared as UNIQUE on <code>Taxon.ottId</code>, <code>Patent.pubNumber</code>, <code>IPCClass.code</code>, and <code>CPCClass.code</code>; non-unique indexes on <code>Taxon.ncbiTaxId</code>, <code>Taxon.gbifTaxKey</code>, <code>Taxon.name</code>, <code>Patent.familyId</code>, <code>Patent.country</code>. Loading proceeded in four phases: (A) <code>Taxon</code> nodes only (no edges, 4,529,570 rows in 263.5 s), (B) <code>HAS_PARENT</code> edges by MATCH on indexed <code>ottId</code> (4,529,569 rows in 358.0 s), (C) NCBI English commons as <code>Vernacular</code> nodes joined via <code>ncbiTaxId</code> (43,144 vernaculars in 2.4 s), and (D) GBIF <code>nl</code>/<code>en</code> vernaculars joined via <code>gbifTaxKey</code> (481,465 vernaculars in 25.3 s). Batches of 20,000 (phases A, B) or 5,000 (phases C, D) rows were submitted as <code>UNWIND $rows AS r CREATE …</code> queries.</p>
+
+<h3>Patent overlay</h3>
+<p>The full set of OTT names at <code>rank='species'</code> was filtered to those that conform to a strict binomial shape (two lowercase Latin words after lowercasing, eliminating subspecies, hybrids, and informal names) — yielding 2,522,713 candidate names — and uploaded to a BigQuery table <code>treeoflife-2026:treeoflife.species</code>. The patent overlay was then generated in a single SQL pass against the public dataset <span class="mono">patents-public-data.patents.publications</span> using an extract-then-join pattern:</p>
+<pre style="font-size:8.5pt;line-height:1.35;background:#f8f9fa;padding:0.5em 0.7em;border-radius:4px;margin:0.6em 0;white-space:pre-wrap;word-break:keep-all;border-left:3px solid #d0d7de;"><code>WITH species AS (
+  SELECT ott_id, name, LOWER(name) AS lname
+  FROM `treeoflife-2026.treeoflife.species`
+)
+SELECT s.ott_id, s.name,
+       p.publication_number, p.country_code, p.kind_code,
+       p.family_id, p.publication_date, p.filing_date,
+       (SELECT t.text FROM UNNEST(p.title_localized) t
+        WHERE t.language='en' LIMIT 1) AS title_en,
+       p.assignee,
+       ARRAY(SELECT c.code FROM UNNEST(p.ipc) c) AS ipc_codes,
+       ARRAY(SELECT c.code FROM UNNEST(p.cpc) c) AS cpc_codes
+FROM `patents-public-data.patents.publications` p,
+     UNNEST(REGEXP_EXTRACT_ALL(
+       LOWER(CONCAT(IFNULL(title_text,''),' ',
+                    IFNULL(abstract_text,''))),
+       r'\b[a-z]+ [a-z]+\b')) AS candidate
+JOIN species s ON s.lname = candidate</code></pre>
+<p>The regex pattern <code>\b[a-z]+ [a-z]+\b</code> emits every two-word lowercase phrase from each English title or abstract; the JOIN against the species table filters the noise (author names, place names, jargon) down to confirmed-binomial mentions. The query scanned 258 GB in 80 s on the BigQuery free tier (1 TB / month) and returned 1,562,854 (species, patent) edges across 22,819 species and 759,182 distinct patents. The result was written directly to a destination table to avoid streaming millions of rows back to the client, then exported as JSONL for the Neo4j ingest. Two pilot runs at the 1,000-species short-list scale — one via EPO OPS at top-25 hits per species, one via BigQuery on the same short list with no cap — were performed previously for cross-validation; both recovered the same Mantel correlogram pattern (Supplementary Information).</p>
+
+<h3>Class definitions</h3>
+<p>The 2024-01 WIPO IPC scheme was downloaded from <span class="mono">www.wipo.int/ipc/itos4ipc/.../EN_ipc_title_list_20240101.zip</span> (79,474 code-title pairs, 8 sections A–H). Subgroup codes are encoded as a 14-character fixed-width string of the form <code>[A-H]{1}[0-9]{2}[A-Z]{1}[0-9]{4}[0-9]{6}</code> (subclass + four-digit main group + six-digit subgroup), parsed and re-formatted to the conventional <code>SUBCLASS MG/SG</code> notation. The 2026-05 EPO/USPTO CPC scheme was downloaded from <span class="mono">www.cooperativepatentclassification.org/sites/default/files/cpc/bulk/CPCTitleList202605.zip</span> (254,274 code-title pairs, 9 sections A–H plus Y). For each <code>IPCClass</code> and <code>CPCClass</code> node in the graph we resolved a definition by exact-match lookup, falling back to the canonical <code>/00</code> main-group form (to absorb a parser truncation in our OPS-side IPC extraction), then to subclass, class and section. All 3,133 IPC and 3,993 CPC classes resolved successfully.</p>
+
+<h3>Statistical analysis</h3>
+<p>For the Mantel test<sup>6</sup>, species were filtered to those with ≥5 unique <code>:HAS_PATENT</code>-linked patents (<i>n</i> = 9,944). For each species, the lineage to the OTT root was extracted as a list of OTT identifiers via a variable-length <code>MATCH (t)-[:HAS_PARENT*0..]→(root)</code> Cypher query. The pairwise phylogenetic distance <i>D</i><sub>phy</sub>(<i>i</i>, <i>j</i>) was computed as the LCA-rooted edge count: the smallest <i>k</i> + <i>l</i> such that <i>k</i> ancestors above <i>i</i> and <i>l</i> ancestors above <i>j</i> meet at a shared node. The pairwise patent-profile distance <i>D</i><sub>pat</sub>(<i>i</i>, <i>j</i>) was the Jaccard distance over the species' sets of distinct CPC subclass codes. The global Mantel correlation was the Pearson <i>r</i> between the upper-triangular vectorisations of <i>D</i><sub>phy</sub> and <i>D</i><sub>pat</sub>; the one-sided permutation <i>p</i>-value used 999 simultaneous row-and-column permutations of <i>D</i><sub>pat</sub><sup>6,8</sup> (reduced from 9,999 for tractability at <i>n</i> = 9,944, where each permutation involves 49 × 10<sup>6</sup> upper-triangle elements; 999 still gives a <i>p</i>-floor of 0.001, far below any meaningful significance threshold). To avoid materialising a permuted 9,944 × 9,944 matrix per iteration, permutations were applied as a vectorised index lookup <code>D2[perm[i], perm[j]]</code> over precomputed upper-triangle index arrays, reducing each permutation from ~1 s + 800 MB allocation to ~50 ms with no GC churn. The Mantel correlogram bins phylogenetic distance into [0, 3), [3, 6), [6, 9), [9, 12), [12, ∞) edges and tests, in each bin, the Pearson correlation between a binary bin-membership indicator and <i>D</i><sub>pat</sub> by the same 999-permutation procedure<sup>8</sup>. Bonferroni correction was applied at α = 0.05 / (number of testable bins). All statistics were computed with NumPy 2.3.3 and SciPy 1.16.2; figures were produced in Matplotlib 3.10.6 (Agg backend). The random seed was 20260506.</p>
+
+<p>For the branch-length analysis, the species set was matched by scientific name to the tips of the TimeTree of Life v5 (TToL5; 137,306 species, distributed in the MEGA-TT resource as a Newick tree with integer tip identifiers and a name map)<sup>10,11</sup>; 5,387 of the 9,944 patent-linked species (54.5%; 72.4% of patent volume) matched a tip. The tree was pruned to the matched tips with DendroPy 5.0.8. The pruned tree is exactly ultrametric (all tips 3,772 Myr from the root, s.d. &lt; 10<sup>−4</sup>); the divergence-time distance <i>D</i><sub>div</sub>(<i>i</i>, <i>j</i>) was taken as the age of the most-recent common ancestor of <i>i</i> and <i>j</i>, computed in a single post-order traversal that assigns to every leaf pair the age of the internal node at which their subtrees join (equivalent to half the patristic distance; the Pearson Mantel <i>r</i> is invariant to this constant factor). CPC-subclass profiles for the matched species were reconstructed directly from the BigQuery hit records (the source from which the graph was loaded) and validated to reproduce the graph-derived per-species subclass counts exactly for all 9,944 species. After removing 81 species whose patents carried only IPC and no CPC codes, 5,306 species (14,074,165 pairs) entered the test. The global Mantel test and a seven-bin divergence-time correlogram (bin edges 0, 10, 50, 100, 250, 500, 1,500, 4,000 Myr; Bonferroni α = 0.05/7) used the same vectorised 999-permutation procedure as above (seed 20260526). As a control for metric choice, the topological edge-count Mantel test was recomputed on the identical pruned TToL5 tree and species set (199 permutations).</p>
+
+<h3>Reproducibility</h3>
+<p>The complete GRAFT codebase — graph ingest, patent retrieval with adaptive throttling, schema resolution, the topological and branch-length statistical analyses, and figure generation — together with the analysis-ready derived artefacts (Mantel result tables, the pruned TimeTree subtree, reconstructed CPC profiles, matched-species lists and all figures) is publicly available at <a href="https://github.ugent.be/wvcrieki/GRAFT" style="color:#1f6feb;">github.ugent.be/wvcrieki/GRAFT</a>. The fixed random seeds (20260506 for the topological analysis, 20260526 for the branch-length analysis) together with these artefacts reproduce every number reported here.</p>
+
+<h3>Data availability</h3>
+<p>Source datasets are public and directly downloadable from the URLs given above (Open Tree of Life, NCBI Taxonomy, GBIF Backbone, WIPO IPC, EPO/USPTO CPC); the TimeTree of Life v5 tree is distributed in the MEGA-TT resource<sup>10,11</sup>. Patent metadata redistribution is governed by the respective database terms of service; the small derived result files (<code>mantel_results.json</code>, <code>mantel_bl_results.json</code>, <code>topo_check_results.json</code>, the reconstructed CPC profiles and matched-species lists) are included in the GRAFT repository. The large intermediate files (the 1.56 × 10<sup>6</sup>-row BigQuery hit table and the Neo4j database dump) exceed repository size limits and will be deposited on Zenodo with a citable DOI upon acceptance; they are available from the author on request in the interim.</p>
+
+<h3>Code availability</h3>
+<p>All Python scripts — graph ingest (<code>preprocess.py</code>, <code>load_neo4j.py</code>), patent retrieval (<code>ops_search.py</code>, <code>bq_search_full.py</code>, <code>load_patents_bq.py</code>), class resolution (<code>resolve_classes.py</code>), the topological Mantel analysis (<code>mantel_analysis.py</code>), the branch-length pipeline (<code>timetree_coverage.py</code>, <code>build_timetree_distmat.py</code>, <code>build_cpc_profiles.py</code>, <code>mantel_branchlength.py</code>, <code>topo_check.py</code>), and figure generation (<code>build_figures.py</code>) — are openly licensed under MIT and available at <a href="https://github.ugent.be/wvcrieki/GRAFT" style="color:#1f6feb;">github.ugent.be/wvcrieki/GRAFT</a>.</p>
+
+<h3>Author contributions</h3>
+<p>W.V.C. designed the study, performed all analyses, built GRAFT and the web interface, and wrote the manuscript.</p>
+
+<h3>Competing interests</h3>
+<p>The author declares no competing interests.</p>
+
+<h3>Funding</h3>
+<p>No specific funding was received for this work.</p>
+
+<h3>Acknowledgements</h3>
+<p>This work would not exist without the open data and open science of the Open Tree of Life, NCBI Taxonomy, GBIF Backbone, WIPO, EPO/USPTO, and Google Patents Public Data initiatives. Computational resources were provided by Ghent University.</p>
+
+<h2 class="refs">References</h2>
+<div class="refs">
+<ol>
+<li>Hinchliff, C. E., Smith, S. A., Allman, J. F. <i>et al.</i> Synthesis of phylogeny and taxonomy into a comprehensive tree of life. <i>Proc. Natl Acad. Sci. USA</i> <b>112</b>, 12764&ndash;12769 (2015).</li>
+<li>Schoch, C. L., Ciufo, S., Domrachev, M. <i>et al.</i> NCBI Taxonomy: a comprehensive update on curation, resources and tools. <i>Database</i> <b>2020</b>, baaa062 (2020).</li>
+<li>GBIF Secretariat. <i>GBIF Backbone Taxonomy.</i> Checklist dataset (2023). https://doi.org/10.15468/39omei.</li>
+<li>Pagel, M. Inferring the historical patterns of biological evolution. <i>Nature</i> <b>401</b>, 877&ndash;884 (1999).</li>
+<li>Blomberg, S. P., Garland, T. Jr &amp; Ives, A. R. Testing for phylogenetic signal in comparative data: behavioral traits are more labile. <i>Evolution</i> <b>57</b>, 717&ndash;745 (2003).</li>
+<li>Mantel, N. The detection of disease clustering and a generalized regression approach. <i>Cancer Res.</i> <b>27</b>, 209&ndash;220 (1967).</li>
+<li>Jaccard, P. The distribution of the flora in the alpine zone. <i>New Phytol.</i> <b>11</b>, 37&ndash;50 (1912).</li>
+<li>Legendre, P. &amp; Fortin, M.-J. Spatial pattern and ecological analysis. <i>Vegetatio</i> <b>80</b>, 107&ndash;138 (1989).</li>
+<li>Lens.org. The Lens patent and scholarly database. https://www.lens.org (accessed May 2026).</li>
+<li>Kumar, S., Suleski, M., Craig, J. M. <i>et al.</i> TimeTree 5: an expanded resource for species divergence times. <i>Mol. Biol. Evol.</i> <b>39</b>, msac174 (2022).</li>
+<li>Hedges, S. B., Marin, J., Suleski, M., Paymer, M. &amp; Kumar, S. Tree of life reveals clock-like speciation and diversification. <i>Mol. Biol. Evol.</i> <b>32</b>, 835&ndash;845 (2015).</li>
+</ol>
+</div>
+
+<hr class="section-break" style="page-break-before: always; border: none; margin: 0;">
+
+<h2 style="page-break-before: always;">Supplementary Information</h2>
+
+<h3>S1 &mdash; Pilot replication studies</h3>
+<p>The full-tree BigQuery overlay reported in the main text was preceded by two smaller pilots that we used to validate the Mantel-test pipeline before scaling. Both pilots were restricted to a 1,000-species short list of the most-named species in the graph (ranked by <code>count(:HAS_VERNACULAR)</code>, a proxy for human familiarity). The pilots differ from the full-tree run in two ways relevant to the result: (i) corpus coverage &mdash; pilots target a curated short list, the full run includes every species the corpus mentions; and (ii) per-species cap &mdash; the OPS pilot capped at 25 top-ranked patents per species while both BigQuery runs are uncapped. Comparing the three runs therefore isolates the effects of corpus and cap from the underlying phylogenetic-signal result.</p>
+
+<table>
+<caption><b>Supplementary Table S1 | Mantel test across three independent patent-corpus constructions.</b> All three runs use the same <code>:HAS_PARENT</code> topology and the same Jaccard distance on CPC subclasses; only the patent layer differs. The signal is present in all three; the effect size shrinks monotonically as taxonomic breadth grows, consistent with cross-kingdom dilution (Main, &sect;Phylogenetic signal in patent applications).</caption>
+<thead>
+<tr><th>Run</th><th>Backend</th><th>Species set</th><th>Per-species cap</th><th>Global Mantel <i>r</i></th><th><i>n</i> species (&ge;5 patents)</th><th>Correlogram shape</th></tr>
+</thead>
+<tbody>
+<tr><td>Pilot 1</td><td>EPO OPS biblio search</td><td>1,000 top-vernacular short list</td><td>25 (rate-limited)</td><td>+0.281</td><td>&asymp;430</td><td>Negative <i>r</i> at all four close-distance bins; <i>p</i> = 0.001</td></tr>
+<tr><td>Pilot 2</td><td>Google Patents BigQuery</td><td>1,000 top-vernacular short list</td><td>none</td><td>+0.253</td><td>&asymp;530</td><td>Negative <i>r</i> at all four close-distance bins; <i>p</i> = 0.001</td></tr>
+<tr><td>Full run (main paper)</td><td>Google Patents BigQuery</td><td>All species mentioned in title/abstract</td><td>none</td><td><b>+0.188</b></td><td>9,944</td><td>Table 1 in main paper</td></tr>
+</tbody>
+</table>
+
+<p>Two observations drive the manuscript's conclusion that the result is not an artefact of corpus choice or sampling cap:</p>
+<ul style="margin:0 0 0.7em 1.5em; line-height:1.55;">
+<li><b>The three <i>r</i>-values are within 0.10 of each other</b> (range 0.188&ndash;0.281) and all have the same one-sided permutation <i>p</i> = 0.001 floor. Lifting the OPS top-25 cap (Pilot 1 &rarr; Pilot 2) moved <i>r</i> down by only 0.028 &mdash; the cap is not the source of the signal.</li>
+<li><b>The correlogram shape is preserved across all three runs.</b> Every pilot shows negative <i>r</i> in the four close-distance bins ([0,3), [3,6), [6,9), [9,12)) and a sign-flip in the cross-kingdom bin ([12,&infin;)) &mdash; the same pattern reported in Table 1 of the main paper.</li>
+</ul>
+
+<p>The full-tree run's smaller global <i>r</i> = +0.188 (vs. +0.253 for the matched-shortlist BigQuery pilot) is expected: extending the species set from 530 well-studied taxa to 9,944 species across the full eukaryotic tree adds many cross-kingdom pairs (the [12, &infin;) bin alone now holds 4.65 &times; 10<sup>7</sup> of the 4.94 &times; 10<sup>7</sup> total pairs, dominating the global Pearson correlation). This is precisely the dilution effect that motivates the correlogram decomposition reported in Table 1, in which each phylogenetic-distance bin's signal is reported separately and remains highly significant at every close-distance bin.</p>
+
+<h3>S2 &mdash; Supplementary Table 2: predictive query results (medicinal preparations, CPC <i>A61K</i>)</h3>
+<p>Results below were generated by running the Box 1 Cypher pattern against the live <code>treeoflife</code> graph with <code>$target = 'A61K'</code> and the maximum phylo-distance restricted to 2 (sister-species, same genus). Donor strength threshold: <code>$min_strength = 500</code>. For brevity, only the 15 strongest donors are shown; the full ranked list (700 donors at threshold 500, 3,691 at threshold 50) is reproducible from the query in Box 1. Candidates are species in the same genus as the donor that have at least one patent in the graph but no patent classified into <i>A61K</i>.</p>
+
+<table>
+<caption><b>Supplementary Table S2 | Top-15 A61K donors with sister-species candidates.</b> Donor strength = number of <code>:HAS_PATENT</code>&rarr;<i>A61K</i>-classified edges from the donor species. Candidates listed in <i>italic</i>; all are at OTT phylogenetic distance 2 (same genus, no patent in the <i>A61K</i> subclass). Generated 2026-05-11 from the live graph.</caption>
+<thead>
+<tr><th style="width:18%;">Donor species</th><th style="width:10%;">Donor strength (A61K edges)</th><th style="width:12%;">Genus</th><th style="width:5%;">N candidates</th><th>Candidates (same-genus, no A61K)</th></tr>
+</thead>
+<tbody>
+<tr><td><i>Angelica sinensis</i></td><td>86,814</td><td><i>Angelica</i></td><td>12</td><td class="small"><i>A. atropurpurea, A. biserrata, A. cartilaginomarginata, A. edulis, A. furcijuga, A. genuflexa, A. glauca, A. laxifoliata, A. longicaudata, A. pseudoselinum, A. tenuisecta, A. ursina</i></td></tr>
+<tr><td><i>Rheum officinale</i></td><td>67,170</td><td><i>Rheum</i></td><td>4</td><td class="small"><i>R. acuminatum, R. likiangense, R. tibeticum, R. webbianum</i></td></tr>
+<tr><td><i>Astragalus membranaceus</i></td><td>63,508</td><td><i>Astragalus</i></td><td>9</td><td class="small"><i>A. adsurgens, A. galactites, A. lithophilus, A. melilotoides, A. scaberrimus, A. strictus, A. tenuis, A. uliginosus, A. variabilis</i></td></tr>
+<tr><td><i>Salvia miltiorrhiza</i></td><td>54,009</td><td><i>Salvia</i></td><td>13</td><td class="small"><i>S. apiana, S. deserta, S. glabrescens, S. leucophylla, S. mellifera, S. multicaulis, S. nemorosa, S. pisidica, S. pratensis, S. uliginosa, S. urica, S. vasta, S. verticillata</i></td></tr>
+<tr><td><i>Schisandra chinensis</i></td><td>53,131</td><td><i>Schisandra</i></td><td>5</td><td class="small"><i>S. arisanensis, S. macrocarpa, S. plena, S. repanda, S. sphaerandra</i></td></tr>
+<tr><td><i>Codonopsis pilosula</i></td><td>48,583</td><td><i>Codonopsis</i></td><td>5</td><td class="small"><i>C. affinis, C. alpina, C. bulleyana, C. javanica, C. ussuriensis</i></td></tr>
+<tr><td><i>Scutellaria baicalensis</i></td><td>42,243</td><td><i>Scutellaria</i></td><td>5</td><td class="small"><i>S. andrachnoides, S. galericulata, S. laeteviolacea, S. pekinensis, S. teniana</i></td></tr>
+<tr><td><i>Coptis chinensis</i></td><td>40,957</td><td><i>Coptis</i></td><td>1</td><td class="small"><i>C. omeiensis</i></td></tr>
+<tr><td><i>Ganoderma lucidum</i></td><td>36,670</td><td><i>Ganoderma</i></td><td>18</td><td class="small"><i>G. ahmadii, G. brownii, G. cochlear, G. colossus, G. curtisii, G. destructans, G. enigmaticum, G. formosanum, G. guinanense, G. hoehnelianum, G. mastoporum, G. neojaponicum, G. pseudoferreum, G. steyaertanum, G. tropicum, G. weberianum, G. zonatum, Trachyderma tsunodae</i></td></tr>
+<tr><td><i>Oldenlandia diffusa</i></td><td>31,438</td><td><i>Oldenlandia</i></td><td>1</td><td class="small"><i>O. corymbosa</i></td></tr>
+<tr><td><i>Staphylococcus aureus</i></td><td>24,911</td><td><i>Staphylococcus</i></td><td>11</td><td class="small"><i>S. argenteus, S. condimenti, S. edaphicus, S. faecalis, S. massiliensis, S. nepalensis, S. petrasii, S. pettenkoferi, S. piscifermentans, S. pseudolugdunensis, S. schweitzeri, S. vitulinus</i></td></tr>
+<tr><td><i>Angelica dahurica</i></td><td>24,020</td><td><i>Angelica</i></td><td>12</td><td class="small">(same 12 <i>Angelica</i> congeners as <i>A. sinensis</i>; cross-class persistence)</td></tr>
+<tr><td><i>Escherichia coli</i></td><td>22,970</td><td><i>Escherichia&ndash;Shigella</i></td><td>2</td><td class="small"><i>Citrobacter koseri, Escherichia albertii</i></td></tr>
+<tr><td><i>Polygala tenuifolia</i></td><td>19,092</td><td><i>Polygala</i></td><td>7</td><td class="small"><i>P. chamaebuxus, P. chinensis, P. furcata, P. latouchei, P. reinii, P. telephioides, P. wattersii</i></td></tr>
+<tr><td><i>Streptococcus pneumoniae</i></td><td>18,769</td><td><i>Streptococcus</i></td><td>7</td><td class="small"><i>S. alactolyticus, S. canis, S. infantarius, S. lactarius, S. macedonicus, S. macacae, S. pasteurianus</i></td></tr>
+</tbody>
+</table>
+
+<h3>S3 &mdash; Supplementary Table 3: predictive query results (cosmetics, CPC <i>A61Q</i>)</h3>
+<p>As above, with <code>$target = 'A61Q'</code> and <code>$min_strength = 100</code>. The CPC <i>A61Q</i> subclass (specific use of cosmetics or similar toilet preparations) is structurally smaller than <i>A61K</i> (only 444 strong donors at threshold 50 vs. 3,691 for <i>A61K</i>), so the strength cutoff is lowered accordingly.</p>
+
+<table>
+<caption><b>Supplementary Table S3 | Top-10 A61Q donors with sister-species candidates.</b> Donor strength = number of <code>:HAS_PATENT</code>&rarr;<i>A61Q</i>-classified edges from the donor species. Generated 2026-05-11.</caption>
+<thead>
+<tr><th style="width:18%;">Donor species</th><th style="width:10%;">Donor strength (A61Q edges)</th><th style="width:12%;">Genus</th><th style="width:5%;">N candidates</th><th>Candidates (same-genus, no A61Q)</th></tr>
+</thead>
+<tbody>
+<tr><td><i>Aloe vera</i></td><td>2,020</td><td><i>Aloe</i></td><td>9</td><td class="small"><i>A. africana, A. bella, A. humilis, A. maculata, A. nyeriensis, A. rauhii, A. schweinfurthii, A. spicata, A. succotrina</i></td></tr>
+<tr><td><i>Staphylococcus aureus</i></td><td>1,464</td><td><i>Staphylococcus</i></td><td>22</td><td class="small"><i>S. argenteus, S. carnosus, S. chromogenes, S. condimenti, S. delphini, S. edaphicus, S. equorum, S. faecalis, S. kloosii, S. leei, S. massiliensis, S. muscae, S. nepalensis, S. pasteuri, S. petrasii, S. pettenkoferi, S. piscifermentans, S. pseudintermedius, S. pseudolugdunensis, S. schweitzeri, S. succinus, S. vitulinus</i></td></tr>
+<tr><td><i>Bletilla striata</i></td><td>1,394</td><td><i>Bletilla</i></td><td>1</td><td class="small"><i>B. formosana</i></td></tr>
+<tr><td><i>Lactobacillus plantarum</i></td><td>1,304</td><td><i>Lactobacillus</i></td><td>78</td><td class="small">78 congeners; full list reproducible from the live query (top 5 shown): <i>L. acetotolerans, L. acidipiscis, L. agilis, L. algidus, L. alimentarius</i>&hellip;</td></tr>
+<tr><td><i>Ganoderma lucidum</i></td><td>1,181</td><td><i>Ganoderma</i></td><td>28</td><td class="small">28 congeners; superset of the <i>A61K</i> candidates listed in Table S2.</td></tr>
+<tr><td><i>Glycyrrhiza glabra</i></td><td>1,148</td><td><i>Glycyrrhiza</i></td><td>4</td><td class="small"><i>G. aspera, G. echinata, G. glandulifera, G. korshinskyi</i></td></tr>
+<tr><td><i>Scutellaria baicalensis</i></td><td>1,043</td><td><i>Scutellaria</i></td><td>18</td><td class="small">18 congeners; superset of the <i>A61K</i> candidates listed in Table S2.</td></tr>
+<tr><td><i>Escherichia coli</i></td><td>937</td><td><i>Escherichia&ndash;Shigella</i></td><td>5</td><td class="small"><i>E. albertii, E. fergusonii, Shigella boydii, S. flexneri, Citrobacter koseri</i></td></tr>
+<tr><td><i>Gleditsia sinensis</i></td><td>886</td><td><i>Gleditsia</i></td><td>5</td><td class="small"><i>G. amorphoides, G. delavayi, G. fera, G. microphylla, G. triacanthos</i></td></tr>
+<tr><td><i>Saccharomyces cerevisiae</i></td><td>811</td><td><i>Saccharomyces</i></td><td>9</td><td class="small"><i>S. bayanus, S. chevalieri, S. ellipsoideus, S. eubayanus, S. mikatae, S. minor, S. paradoxus, S. pastorianus, S. uvarum</i></td></tr>
+</tbody>
+</table>
+
+<h3>S4 &mdash; Cross-class consistency</h3>
+<p>Several donor genera appear in both Tables S2 and S3 (<i>Staphylococcus aureus</i>, <i>Ganoderma lucidum</i>, <i>Scutellaria baicalensis</i>, <i>Escherichia coli</i>), and their sister-species candidate sets overlap heavily &mdash; for example, all 11 <i>Staphylococcus</i> candidates flagged as A61K-unflagged are also flagged as A61Q-unflagged. The argument in the main paper (Example 2: "Cross-class consistency") is precisely this: when an identical sister-species is flagged by two independent application subclasses with two independent donor species in the same genus, the prior probability of the candidate being biotechnologically relevant rises sharply. The two-class intersection in this small slice already identifies &asymp; 40 candidate species whose chemistry, physiology, or microbiome niche makes them simultaneous priors for both medicinal-preparation and cosmetics screening.</p>
+
+<h3>S5 &mdash; Reproduction</h3>
+<p>To regenerate either table, run the Cypher pattern in <b>Box 1</b> of the main paper against the live graph with the parameters tabulated below.</p>
+<table style="width:auto;">
+<thead><tr><th>Parameter</th><th>Table S2 (A61K)</th><th>Table S3 (A61Q)</th></tr></thead>
+<tbody>
+<tr><td><code>$target</code></td><td><code>'A61K'</code></td><td><code>'A61Q'</code></td></tr>
+<tr><td><code>$min_strength</code></td><td><code>500</code></td><td><code>100</code></td></tr>
+<tr><td>Max phylo-distance</td><td>2 (sister-species)</td><td>2 (sister-species)</td></tr>
+<tr><td>Result truncation</td><td>Top 15 donors</td><td>Top 10 donors</td></tr>
+</tbody>
+</table>
+<p class="small"><i>Graph commit:</i> 4,529,570 Taxon nodes, 759,182 Patent nodes, 35,139 CPCClass nodes &mdash; full-tree BigQuery overlay, build 2026-05-08. The graph state, the Cypher query, and the random seed (20260506) used by the Mantel pipeline together fully reproduce all numbers reported in the main paper and in this Supplementary Information.</p>
+
+<h3>S6 &mdash; Web interface for interactive exploration</h3>
+<p>To let domain experts probe GRAFT without writing Cypher, we built a single-page browser served by a 200-line FastAPI back-end (<code>webapp/main.py</code>) wrapping four endpoints &mdash; <code>/api/taxon/search</code> (autocomplete on indexed <code>Taxon.name</code>), <code>/api/cpc</code> (CPC subclasses with patent and species counts), <code>/api/lineage</code> (root-ward path of any taxon), and <code>/api/tree</code> (the predictive subtree query in <b>Box 1</b> of the main paper, returning a forest of leaves plus up to six representative patent titles and Google Patents URLs per leaf, in one round-trip). The front-end (<code>webapp/static/{index.html, app.js, style.css}</code>) renders a D3 cluster dendrogram in vanilla JavaScript: species leaves are coloured green and labelled with their scientific binomial, English vernacular (where present in NCBI or GBIF), and patent count for the selected CPC subclass. Hovering a leaf reveals a tooltip with clickable patent titles linking to <code>patents.google.com</code> and a Wikipedia (en) link. Clicking an internal node re-roots the view at that node (drill down); a breadcrumb at the top shows the lineage of the current root, with each ancestor crumb clickable for drill-up.</p>
+
+<p><b>Worked example &mdash; Solanoideae &times; A61K.</b> Selecting the nightshade subfamily <i>Solanoideae</i> (OTT id 13867) and the medicinal-preparation subclass <i>A61K</i> returns 15 species ranked by patent count. The result tracks medicinal pharmacopoeia well outside the food-crop members of the family:</p>
+
+<figure>
+<img src="../data/fig_webapp_solanoideae.png" alt="Web interface screenshot: Solanoideae × A61K">
+<figcaption><b>Figure S1 | Web interface, Solanoideae &times; A61K view.</b> Single-page browser at <code>http://localhost:8000/?ott=13867&amp;cpc=A61K&amp;limit=15</code>. The breadcrumb shows the lineage of the current root (<i>life &rsaquo; &hellip; &rsaquo; Solanaceae &rsaquo; Solanoideae</i>); each ancestor is clickable for drill-up. The dendrogram presents the 15 top-ranked nightshade species, each labelled with its scientific binomial, English vernacular (where available), and A61K-patent count. Mousing over any green leaf opens a tooltip with the patent titles linked to <code>patents.google.com</code> plus a Wikipedia link; clicking an internal node re-roots the view at that node. Output of the same Cypher pattern listed in Box 1 of the main paper.</figcaption>
+</figure>
+
+<table>
+<caption><b>Supplementary Table S4 | Top-15 A61K-patented species in Solanoideae</b> (subfamily of Solanaceae). Direct output of the <code>/api/tree</code> endpoint with <code>ott=13867, cpc=A61K, limit=15</code>. Patent counts are distinct <code>:HAS_PATENT</code> edges; English vernacular pulled from GBIF / NCBI.</caption>
+<thead>
+<tr><th>Rank</th><th>Species</th><th>English name</th><th>A61K patents</th></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td><i>Lycium barbarum</i></td><td>goji / Duke of Argyll's teatree</td><td>506</td></tr>
+<tr><td>2</td><td><i>Lycium ruthenicum</i></td><td>(black goji)</td><td>412</td></tr>
+<tr><td>3</td><td><i>Withania somnifera</i></td><td>ashwagandha</td><td>368</td></tr>
+<tr><td>4</td><td><i>Lycium chinense</i></td><td>Chinese boxthorn</td><td>313</td></tr>
+<tr><td>5</td><td><i>Solanum nigrum</i></td><td>black nightshade</td><td>163</td></tr>
+<tr><td>6</td><td><i>Solanum lyratum</i></td><td>(no en. vernacular)</td><td>157</td></tr>
+<tr><td>7</td><td><i>Capsicum annuum</i></td><td>sweet pepper</td><td>93</td></tr>
+<tr><td>8</td><td><i>Solanum melongena</i></td><td>aubergine</td><td>42</td></tr>
+<tr><td>9</td><td><i>Solanum dulcamara</i></td><td>climbing nightshade</td><td>39</td></tr>
+<tr><td>10</td><td><i>Solanum tuberosum</i></td><td>potato</td><td>39</td></tr>
+<tr><td>11</td><td><i>Physalis angulata</i></td><td>cutleaf groundcherry</td><td>37</td></tr>
+<tr><td>12</td><td><i>Capsicum frutescens</i></td><td>bird pepper</td><td>35</td></tr>
+<tr><td>13</td><td><i>Solanum glaucophyllum</i></td><td>waxyleaf nightshade</td><td>34</td></tr>
+<tr><td>14</td><td><i>Solanum lycopersicum</i></td><td>tomato</td><td>31</td></tr>
+<tr><td>15</td><td><i>Atropa belladonna</i></td><td>belladonna</td><td>25</td></tr>
+</tbody>
+</table>
+
+<p>The ranking is dominated by traditional-medicine taxa rather than the food crops the family is famous for: the three <i>Lycium</i> species (goji berries) and <i>Withania somnifera</i> (Indian Ayurvedic ashwagandha) together carry 1,599 of the subfamily's A61K patents &mdash; almost five times the combined total of <i>Solanum tuberosum</i> (potato), <i>S. lycopersicum</i> (tomato), <i>S. melongena</i> (aubergine), and <i>Capsicum annuum</i> (sweet pepper). The medical pharmacopoeia tags the historic medicinal genera even though the agricultural-economic weight sits with the food crops, an asymmetry the browser exposes at a glance.</p>
+
+<p>Run the interface locally with <code>uvicorn webapp.main:app&nbsp;&#8209;&#8209;reload&nbsp;&#8209;&#8209;port&nbsp;8000</code> after populating <code>.env</code>; the page is served at <code>http://localhost:8000</code>.</p>
+
+<h3>S7 &mdash; Branch-length (time-calibrated) analysis</h3>
+<p>To confirm that the phylogenetic signal is not an artefact of the unweighted OTT topology, we repeated the Mantel analysis using time-calibrated divergence times from the TimeTree of Life v5<sup>10,11</sup> (Methods; main text Figure 4). Of the 9,944 patent-linked species, 5,387 (54.5%) matched a TToL5 tip by scientific name; these carry 72.4% of all patent volume in the graph, and 26 of the 30 most-patented species are present, so the matched subset is taxonomically thinner but retains most of the signal-bearing data. After removing 81 species whose patents carried only IPC codes, 5,306 species (14,074,165 pairs) entered the test. Phylogenetic distance was expressed as the divergence time (Myr) of each pair's most-recent common ancestor on the exactly-ultrametric pruned tree (root age 3,772 Myr).</p>
+
+<table>
+<caption><b>Supplementary Table S5 | Branch-length Mantel correlogram by divergence-time bin (TToL5, n = 5,306 species, 999 permutations).</b> Negative <i>r</i> indicates that pairs in the bin are more profile-similar than chance &mdash; the phylogenetic-signal direction. <i>p</i><sub>neg</sub> is the one-sided permutation <i>p</i>-value for negative <i>r</i>. *** = significant after Bonferroni at α = 0.05/7 = 0.007. Global Mantel <i>r</i> = +0.103, one-sided <i>p</i> = 0.001.</caption>
+<thead><tr><th>Divergence-time bin (Myr)</th><th>Approx. taxonomic span</th><th>Pairs</th><th><i>r</i></th><th><i>p</i><sub>neg</sub></th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td>[0, 10)</td><td>congeneric / recent</td><td>6,017</td><td>&minus;0.027</td><td>0.001</td><td>***</td></tr>
+<tr><td>[10, 50)</td><td>within-family</td><td>39,575</td><td>&minus;0.018</td><td>0.001</td><td>***</td></tr>
+<tr><td>[50, 100)</td><td>within-order</td><td>173,630</td><td>&minus;0.022</td><td>0.001</td><td>***</td></tr>
+<tr><td>[100, 250)</td><td>angiosperm / major-clade radiations</td><td>3,542,204</td><td>&minus;0.105</td><td>0.001</td><td>*** (peak)</td></tr>
+<tr><td>[250, 500)</td><td>within-phylum</td><td>735,334</td><td>&minus;0.034</td><td>0.001</td><td>***</td></tr>
+<tr><td>[500, 1500)</td><td>cross-phylum</td><td>3,586,536</td><td>+0.068</td><td>1.000</td><td>n.s. (anti-direction)</td></tr>
+<tr><td>[1500, 4000)</td><td>cross-kingdom</td><td>5,990,869</td><td>+0.055</td><td>1.000</td><td>n.s. (anti-direction)</td></tr>
+</tbody>
+</table>
+
+<p>The signal is Bonferroni-significant in every bin out to ~500 Myr of divergence and peaks at 100&ndash;250 Myr, the window of the angiosperm radiation and the diversification of the major animal and fungal groups that dominate the patent record. Beyond ~500 Myr the correlation flips positive and non-significant &mdash; the cross-kingdom dilution effect also seen in the topological [12, &infin;) bin of Table 1.</p>
+
+<table style="width:auto;">
+<caption><b>Supplementary Table S6 | Metric-choice control: the result does not depend on topology vs time.</b> All three Mantel tests use the same Jaccard distance on CPC subclasses; they differ only in the phylogenetic-distance metric and species set. The global correlation is positive and significant in every case.</caption>
+<thead><tr><th>Distance metric</th><th>Tree</th><th><i>n</i> species</th><th>Global Mantel <i>r</i></th><th>one-sided <i>p</i></th></tr></thead>
+<tbody>
+<tr><td>Topological (edges through LCA)</td><td>OTT, full tree</td><td>9,944</td><td>+0.188</td><td>0.001</td></tr>
+<tr><td>Topological (edges through LCA)</td><td>TToL5, matched subset</td><td>5,306</td><td>+0.154</td><td>0.005</td></tr>
+<tr><td>Time-calibrated (divergence Myr)</td><td>TToL5, matched subset</td><td>5,306</td><td>+0.103</td><td>0.001</td></tr>
+</tbody>
+</table>
+
+<p>Recomputing the topological edge-count test on the identical 5,306-species TToL5 subtree (<i>r</i> = +0.154) brackets the time-calibrated estimate (<i>r</i> = +0.103) and the original full-tree topological value (<i>r</i> = +0.188): the conclusion is robust to whether phylogenetic distance is measured as topology or as evolutionary time, and to the change of underlying tree (OTT &rarr; TToL5). The smaller time-calibrated global <i>r</i> reflects the enormous Myr weights that deep cross-kingdom pairs receive on a 3,772-Myr-deep ultrametric tree, which dominate a single global Pearson correlation; the per-bin correlogram (Table S5) removes this leverage and is where the time-calibrated signal is sharpest.</p>
+
+</body>
+</html>

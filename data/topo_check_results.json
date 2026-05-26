@@ -1,0 +1,18 @@
+{
+  "n_species": 5306,
+  "n_perm": 199,
+  "tree": "TToL5 (137,306 tips, pruned) — same tree and species as the branch-length run",
+  "metric": "topological edge count through LCA",
+  "global_mantel": {
+    "r": 0.1539522420445303,
+    "p_one_sided_positive": 0.005
+  },
+  "edge_bins": [2, 33, 43, 51, 61, 112],
+  "correlogram": [
+    {"bin": [2, 33],   "n_pairs": 2562298, "r": -0.1195, "p_neg": 0.005},
+    {"bin": [33, 43],  "n_pairs": 3030738, "r": -0.0577, "p_neg": 0.005},
+    {"bin": [43, 51],  "n_pairs": 2650159, "r": 0.0160,  "p_neg": 1.0},
+    {"bin": [51, 61],  "n_pairs": 3008462, "r": 0.0698,  "p_neg": 1.0},
+    {"bin": [61, 112], "n_pairs": 2822508, "r": 0.0872,  "p_neg": 1.0}
+  ]
+}

@@ -1,0 +1,28 @@
+# Secrets — never commit
+.env
+
+# Large raw inputs / intermediates (see Data availability in the manuscript)
+data/bq_hits*.jsonl
+data/ops_hits.jsonl
+data/*.tgz
+data/*.tar.gz
+data/*.zip
+data/backbone*
+data/taxdump*
+data/ott3.7.3*
+data/ncbi/
+data/cpc/
+data/*.log
+data/ott_species.csv
+data/VernacularName.tsv
+
+# Build/run noise
+logs/
+*.log
+__pycache__/
+*.pyc
+.DS_Store
+manuscript/preview-*.png
+manuscript/*.pptx
+manuscript/cover_letter*
+manuscript/SUBMISSION_NOTES.md
