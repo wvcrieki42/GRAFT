@@ -17,6 +17,14 @@ authors:
 version: "1.0.0"
 date-released: "2026-05-27"
 license: MIT
+doi: 10.5281/zenodo.20405422
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.20405422
+    description: Concept DOI (all versions)
+  - type: doi
+    value: 10.5281/zenodo.20405423
+    description: Version DOI (v1.0.0)
 repository-code: "https://github.com/wvcrieki42/GRAFT"
 keywords:
   - phylogenetics
