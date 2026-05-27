@@ -17,7 +17,7 @@ authors:
 version: "1.0.0"
 date-released: "2026-05-27"
 license: MIT
-repository-code: "https://github.ugent.be/wvcrieki/GRAFT"
+repository-code: "https://github.com/wvcrieki42/GRAFT"
 keywords:
   - phylogenetics
   - tree of life

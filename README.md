@@ -45,7 +45,7 @@ See `manuscript/paper.pdf` (Figures 3–4, Tables 1, S5–S6) for full detail.
 ## Quickstart
 
 ```bash
-git clone https://github.ugent.be/wvcrieki/GRAFT.git
+git clone https://github.com/wvcrieki42/GRAFT.git
 cd GRAFT
 cp .env.example .env   # fill in NEO4J_PASSWORD, GCP_PROJECT, OPS_KEY/OPS_SECRET
 
