@@ -1,6 +1,7 @@
 # GRAFT — Graph of Relatedness, Applications, Families and Taxonomy
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20405422.svg)](https://doi.org/10.5281/zenodo.20405422)
+[![bioRxiv](https://img.shields.io/badge/bioRxiv-10.64898%2F2026.05.27.72828-red)](https://doi.org/10.64898/2026.05.27.72828)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 GRAFT is a Neo4j knowledge graph that grafts the global patent literature onto the **Open Tree of Life** phylogeny, with multilingual common names attached, to study the phylogenetic signal of human technological interest in biodiversity. The Neo4j database name (`treeoflife`) is kept for path-compatibility with the scripts and the manuscript supplement.

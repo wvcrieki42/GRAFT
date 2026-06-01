@@ -22,5 +22,13 @@
     "bioprospecting",
     "TimeTree"
   ],
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "related_identifiers": [
+    {
+      "identifier": "10.64898/2026.05.27.72828",
+      "relation": "isSupplementTo",
+      "scheme": "doi",
+      "resource_type": "publication-preprint"
+    }
+  ]
 }

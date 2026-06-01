@@ -25,6 +25,9 @@ identifiers:
   - type: doi
     value: 10.5281/zenodo.20405423
     description: Version DOI (v1.0.0)
+  - type: doi
+    value: 10.64898/2026.05.27.72828
+    description: Preprint (bioRxiv)
 repository-code: "https://github.com/wvcrieki42/GRAFT"
 keywords:
   - phylogenetics
